@@ -1,0 +1,11 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+mainClassName = "ru.itx.proxyapp.ProxyApp"
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
