@@ -48,12 +48,13 @@ public class ProxyApp {
 	
 	@XmlRootElement(name="Root") public static class Root {
 		@XmlElement(name="Answer") public List<Answer> answers = new ArrayList<Answer>();
-	}
+	}		
+	
+	private JAXBContext context = JAXBContext.newInstance(Process.class);
 
 	private Answer answer() throws Exception {		
 		Answer answer = new Answer();
-		URL url = new URL("http://10.7.1.13:3000");		
-		JAXBContext context = JAXBContext.newInstance(Process.class);
+		URL url = new URL("http://10.7.1.13:3000");
 		Unmarshaller unmarshaller = context.createUnmarshaller();		
 		XMLInputFactory factory = XMLInputFactory.newInstance();
 		XMLStreamReader reader = factory.createXMLStreamReader(url.openStream());		
@@ -72,7 +73,7 @@ public class ProxyApp {
 	private Root root() throws Exception {		
 		Root root = new Root();
 		List<Future<Answer>> futures = new ArrayList<Future<Answer>>();
-		ExecutorService pool = Executors.newCachedThreadPool();
+		ExecutorService pool = Executors.newFixedThreadPool(100);
 		for (int i=0;i<3;i++) {
 			futures.add(pool.submit(new Callable<Answer>() {
 				public Answer call() throws Exception {
