@@ -50,12 +50,13 @@ public class ProxyApp {
 		@XmlElement(name="Answer") public List<Answer> answers = new ArrayList<Answer>();
 	}		
 	
-	private JAXBContext context = JAXBContext.newInstance(Process.class);
-
+	private JAXBContext contextProcess = JAXBContext.newInstance(Process.class);	
+	private JAXBContext contextRoot = JAXBContext.newInstance(Root.class);
+	
 	private Answer answer() throws Exception {		
 		Answer answer = new Answer();
 		URL url = new URL("http://10.7.1.13:3000");
-		Unmarshaller unmarshaller = context.createUnmarshaller();		
+		Unmarshaller unmarshaller = contextProcess.createUnmarshaller();		
 		XMLInputFactory factory = XMLInputFactory.newInstance();
 		XMLStreamReader reader = factory.createXMLStreamReader(url.openStream());		
 		while(reader.hasNext()) {
@@ -87,11 +88,10 @@ public class ProxyApp {
 		return root;
 	}	
 	
-	private void encode(Object object, OutputStream response) throws Exception {
-		JAXBContext context = JAXBContext.newInstance(object.getClass());
-		Marshaller marshaller = context.createMarshaller();				
+	private void encode(Root root, OutputStream response) throws Exception {
+		Marshaller marshaller = contextRoot.createMarshaller();				
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-		marshaller.marshal(object, response);
+		marshaller.marshal(root, response);
 	}
 
 	private ProxyApp() throws Exception {		
