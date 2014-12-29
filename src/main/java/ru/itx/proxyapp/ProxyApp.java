@@ -74,7 +74,7 @@ public class ProxyApp {
 	private Root root() throws Exception {		
 		Root root = new Root();
 		List<Future<Answer>> futures = new ArrayList<Future<Answer>>();
-		ExecutorService pool = Executors.newFixedThreadPool(100);
+		ExecutorService pool = Executors.newFixedThreadPool(10);
 		for (int i=0;i<3;i++) {
 			futures.add(pool.submit(new Callable<Answer>() {
 				public Answer call() throws Exception {
