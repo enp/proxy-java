@@ -48,7 +48,9 @@ public class ProxyApp {
 	
 	@XmlRootElement(name="Root") public static class Root {
 		@XmlElement(name="Answer") public List<Answer> answers = new ArrayList<Answer>();
-	}		
+	}	
+	
+	ExecutorService pool = Executors.newFixedThreadPool(100);
 	
 	private JAXBContext contextProcess = JAXBContext.newInstance(Process.class);	
 	private JAXBContext contextRoot = JAXBContext.newInstance(Root.class);
@@ -73,8 +75,7 @@ public class ProxyApp {
 	
 	private Root root() throws Exception {		
 		Root root = new Root();
-		List<Future<Answer>> futures = new ArrayList<Future<Answer>>();
-		ExecutorService pool = Executors.newFixedThreadPool(10);
+		List<Future<Answer>> futures = new ArrayList<Future<Answer>>();		
 		for (int i=0;i<3;i++) {
 			futures.add(pool.submit(new Callable<Answer>() {
 				public Answer call() throws Exception {
@@ -84,7 +85,6 @@ public class ProxyApp {
 		}
 		for (Future<Answer> future : futures)
 			root.answers.add(future.get());
-		pool.shutdown();
 		return root;
 	}	
 	
@@ -96,6 +96,7 @@ public class ProxyApp {
 
 	private ProxyApp() throws Exception {		
 		HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+		server.setExecutor(pool);
 	    server.createContext("/", new HttpHandler() {
 			public void handle(HttpExchange exchange) throws IOException {
 				exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
