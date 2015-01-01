@@ -8,11 +8,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -20,6 +22,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -55,7 +58,7 @@ public class ProxyApp {
 	private JAXBContext contextProcess = JAXBContext.newInstance(Process.class);	
 	private JAXBContext contextRoot = JAXBContext.newInstance(Root.class);
 	
-	private Answer answer() throws Exception {		
+	private Answer answer() throws JAXBException, XMLStreamException, IOException {		
 		Answer answer = new Answer();
 		URL url = new URL("http://10.7.1.13:3000");
 		Unmarshaller unmarshaller = contextProcess.createUnmarshaller();		
@@ -73,7 +76,7 @@ public class ProxyApp {
 		return answer;
 	}
 	
-	private Root root() throws Exception {		
+	private Root root() throws InterruptedException, ExecutionException {		
 		Root root = new Root();
 		List<Future<Answer>> futures = new ArrayList<Future<Answer>>();		
 		for (int i=0;i<3;i++) {
@@ -88,31 +91,31 @@ public class ProxyApp {
 		return root;
 	}	
 	
-	private void encode(Root root, OutputStream response) throws Exception {
+	private void encode(Root root, OutputStream response) throws JAXBException {
 		Marshaller marshaller = contextRoot.createMarshaller();				
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 		marshaller.marshal(root, response);
 	}
 
-	private ProxyApp() throws Exception {		
+	private ProxyApp() throws JAXBException, IOException {		
 		HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 		server.setExecutor(pool);
-	    server.createContext("/", new HttpHandler() {
+		server.createContext("/", new HttpHandler() {
 			public void handle(HttpExchange exchange) throws IOException {
 				exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
 				OutputStream response = exchange.getResponseBody();
 				try {
 					encode(root(), response);
-				} catch (Exception e) {
+				} catch (JAXBException | InterruptedException | ExecutionException e) {
 					e.printStackTrace();
 				}
 				response.close();
 			}
 		});
-	    server.start();
+		server.start();
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws JAXBException, IOException {
 		new ProxyApp();
 	}
 
